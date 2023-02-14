@@ -1,6 +1,6 @@
 ---
-title: "Weekly Summary Template"
-author: "Author Name"
+title: "Week 5 Sum"
+author: "Conner Langnas"
 title-block-banner: true
 title-block-style: default
 toc: true
@@ -10,18 +10,209 @@ format: html
 
 ---
 
-## Tuesday, Jan 17
+## Tuesday, Feb 7
+
+
+
+libraries needed
+```{r}
+library(tidyverse)
+library(ISLR2)
+library(cowplot)
+library(kableExtra)
+```
+
+```{r}
+x <- mtcars$hp
+y <- mtcars$mpg
+
+plot(x, y, pch=20, xlab="HP", ylab="MPG")
+
+model <- lm(y~x)
+summary(model)
+```
+
+For the intercept this means that:
+
+A "hypothetical" car with 'hp=0' will have ' mpg = 30.09' = $\beta_0$
+
+It's more interesting and instructive to consider the interpretation of the slope:
+
+Let's say we have some covariate $x_0$ then the expected value for $y(x_0)$ is given by
+
+------------------------------------------------------------------------
+
+## Catagorical covariates
+
+up until now we have looked at simple linear regression models where both $x$ and $y$ are quantitative.
+
+lets confirm that cyl is catagorical
+
+```{r}
+summary(mtcars$cyl)
+```
+
+
+```{r}
+iris %>% head() %>% kable()
+```
+
+Consider this example:
+
+We want to see if there is a relationship between species and sepal.length . how to start the EDA?
+
+```{r}
+y <- iris$Sepal.Length
+x <- iris$Species
+
+boxplot(Sepal.Length ~ Species, iris)
+```
+
+```{r}
+cat_model <- lm(Sepal.Length ~ Species, iris)
+cat_model
+
+```
+Even if it is categorical, we can write it down as this
+
+$$
+y_i = \beta_0 = \beta_1 x_i
+$$
+
+where $x_i \in { setosa, \ versicolor, \ virginica }$ 3 diffrent models
+
+
+1. $y_i = \beta_0 + \beta_1 (x_i == 'setosa')$
+1. $y_i = \beta_0 + \beta_1 (x_i == 'versicolor')$
+1. $y_i = \beta_0 + \beta_1 (x_i == 'virginica')$
+
+
+* The interpretation of the intercept ($\beta_0$) is the expected y value when x belongs to the base category
+* The slope ($\beta_1$) with the name 'Species.versicolor' represents the following:
+
+* '(Intercept)' = $y(x = \texttt{setosa})$
+
+* 'Species.versicolor' = $y(x = \texttt{versicolor}) - y(x = \texttt{setosa})$
+* 'Species.virginica' = $y(x = \texttt{virginica}) - y(x = \texttt{setosa})$
+
+
+## Multiple Regression
+
+This is the extension of simple linear regression to multiple covariates $X = [x_1  | x_2 | \dots | x_p]$, i.e., 
+
+$$
+y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \dots \beta_p x_p = \epsilon
+$$
+
+## Reordering factors
+
+First we reorder/relevel the categorical covariate
+```{r}
+# before
+iris$Species
+iris$Species <- relevel(iris$Species, "virginica")
+# after
+iris$Species
+```
+
+We can now run the regression model:
+```{r}
+new_cat_model <- lm(Sepal.Length ~ Species, iris)
+new_cat_model
+```
 
 
 
 
+## Thursday, Feb 9
+
+libaries needed today
+
+```{r}
+library(tibble)
+library(ISLR2)
+attach(Credit)
 
 
 
-## Thursday, Jan 19
+df <- Credit %>%
+  tibble()
+colnames(df) <- tolower(colnames(df))
+df
+```
 
 
 
 
+we can look at income, rating, limit
 
+```{r}
+df3 <- df %>%
+  select('income', 'rating', 'limit')
+df3
+```
+
+```{r}
+library(plotly)
+fig <- plot_ly(df3, x=~income, y=~rating, z=~limit)
+fig %>% add_markers()
+```
+ makes a 3d thing 
+
+The regression model is as follows:
+```{r}
+model <- lm(limit ~ income + rating, df3)
+model
+```
+
+What is the interpretation for the coefficients?
+
+1. $\beta_0$ is the expected value of $y$ when $income = 0$ and $rating = 0$ (the credit limit with 0 income and 0 rating is -532) --> this is an extrapolation
+1. $\beta_1$ is saying that if $rating$ is held constant and $income$ changes by 1 unit, then the corresponding change in the 'limit' is $0.5573$.
+1. $\beta_2$ is saying that if $income$ is held constant and $rating$ changes by 1 unit, then the corresponding change in the 'limit' is $14.7711$.
+
+
+```{r}
+summary(model)
+```
+
+
+#### The impact of noise and $\beta$ values on $R^2$
+
+```{r}
+x <- seq(0,100,1)
+b0 <- 1.0
+b1 <- 3.0
+y <- b0 + b1 * x + rnorm(100) * 0.1
+plot(x, y, pch = 20)
+model <- lm(y ~ x)
+summary(model)
+```
+
+
+```{r}
+x <- seq(0,100,1)
+b0 <- 1.0
+b1 <- 3.0
+y <- b0 + b1 * x + rnorm(100) * 20
+plot(x, y, pch = 20)
+model <- lm(y ~ x)
+summary(model)
+```
+
+
+
+
+#### Multiple regression with categorical covariates
+
+categorical and quantitative
+
+```{r}
+model <- lm(limit ~ rating + married, df)
+summary(model)
+ggplot(df) +
+  geom_point(aes(x=rating, y=limit, color=married)) +
+  geom_smooth(aes(x=rating, y=limit, fill=married))
+```
+has two lines, but are super close
 [^footnote]: You can include some footnotes here
